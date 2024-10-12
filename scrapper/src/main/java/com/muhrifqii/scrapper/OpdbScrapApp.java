@@ -1,49 +1,32 @@
 package com.muhrifqii.scrapper;
 
-import java.util.concurrent.Callable;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.ExitCodeGenerator;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-import org.jsoup.Jsoup;
-
-import com.muhrifqii.scrapper.serde.OutputWriter;
-import com.muhrifqii.scrapper.serde.OutputWriterImpl;
-
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import picocli.CommandLine;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.HelpCommand;
-import picocli.CommandLine.Option;
+import picocli.CommandLine.IFactory;
 
 @RequiredArgsConstructor
-@Command(name = "opdb-scrapper", mixinStandardHelpOptions = true, description = "OPDB command that is used to scrap the One Piece Wikia page", subcommands = {
-        HelpCommand.class })
-public class OpdbScrapApp implements Callable<Integer> {
+@SpringBootApplication
+public class OpdbScrapApp implements CommandLineRunner, ExitCodeGenerator {
 
-    private final ScrapperProvider scrapperProvider;
-    private final OutputWriter outputWriter;
+    private final OpdbScrapCommand cli;
+    private IFactory factory;
 
-    @Option(names = { "-o", "--output" }, defaultValue = "./output/", description = "Output directory")
-    private String outputDir;
+    @Getter
+    private int exitCode;
 
     @Override
-    public Integer call() throws Exception {
-        final var totalDf = scrapperProvider.dfScrapper()
-                .getDevilFruitTypeInfo();
-        outputWriter.dumpToJson(totalDf, outputDir, "totalDf.json");
-        return 0;
+    public void run(String... args) throws Exception {
+        exitCode = new CommandLine(cli).execute(args);
     }
 
     public static void main(String[] args) {
-        final var conn = Jsoup.newSession()
-                .timeout(20 * 1000)
-                .header("Accept-Language", "*")
-                .userAgent(
-                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36");
-        final var url = "https://onepiece.fandom.com/wiki";
-        final var dependencyProvider = new ScrapperProviderImpl(url, conn);
-        final var inst = new OpdbScrapApp(dependencyProvider, new OutputWriterImpl());
-
-        final var exitCode = new CommandLine(inst)
-                .execute(args);
-        System.exit(exitCode);
+        System.exit(SpringApplication.exit(SpringApplication.run(OpdbScrapApp.class, args)));
     }
+
 }

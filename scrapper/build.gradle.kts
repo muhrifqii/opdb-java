@@ -23,7 +23,7 @@ dependencies {
   annotationProcessor(libs.lombok)
   compileOnly(libs.lombok)
 
-  implementation(libs.picocli)
+  implementation(libs.picocli.spring)
   implementation(libs.jsoup)
   implementation(libs.gson)
   implementation(libs.diffutils)
